@@ -1,5 +1,6 @@
 import { ApolloDriver } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
+import * as Joi from 'joi';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,6 +11,12 @@ import { RestaurantsModule } from './restaurants/restaurants.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
+      validationSchema: Joi.object({
+        NODE_ENV: Joi.string().valid('dev', 'prod').default('dev').required(),
+        DB_HOST: Joi.string().default('localhost').required(),
+        DB_USERNAME: Joi.string().default('root').required(),
+        DB_DATABASE: Joi.string().default('restaurants').required(),
+      }),
       isGlobal: true,
       envFilePath: process.env.NODE_ENV === 'dev' ? '.env.dev' : '.env.test',
       ignoreEnvFile: process.env.NODE_ENV === 'prod',
@@ -20,7 +27,7 @@ import { RestaurantsModule } from './restaurants/restaurants.module';
       port: Number(process.env.DB_PORT),
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
-      database: process.env.DATABASE,
+      database: process.env.DB_DATABASE,
       synchronize: true,
       logging: true,
     }),
