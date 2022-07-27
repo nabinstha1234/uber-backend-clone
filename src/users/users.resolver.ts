@@ -1,22 +1,20 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Resolver, Query, Context } from '@nestjs/graphql';
+import { AuthUser } from 'src/auth/auth-user.decorator';
 import { AuthGuards } from 'src/auth/auth.guard';
 import {
   CreateAccountInput,
   CreateAccountOutput,
 } from './dtos/create-account.dto';
+import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoginInput, LoginOutPut } from './dtos/login.dto';
+import { UserProfileInput, UserProfileOutput } from './dtos/user-profile.dto';
 import { User } from './entities/user.entity';
 import { UserService } from './users.service';
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(private readonly userService: UserService) {}
-
-  @Query(() => Boolean)
-  hi() {
-    return true;
-  }
 
   @Mutation(() => CreateAccountOutput)
   async createAccount(
@@ -49,10 +47,53 @@ export class UsersResolver {
     }
   }
 
-  @Query(() => Boolean)
+  @Query(() => User)
   @UseGuards(AuthGuards)
-  me() {
-    // console.log(context);
-    return true;
+  me(@AuthUser() authUser: User) {
+    return authUser;
+  }
+
+  @UseGuards(AuthGuards)
+  @Query(() => UserProfileOutput)
+  async userProfile(
+    @Args() userProfileInput: UserProfileInput,
+  ): Promise<UserProfileOutput> {
+    try {
+      const userProfile = await this.userService.findById(
+        userProfileInput.userId,
+      );
+      if (!userProfile) {
+        throw new Error('User not found');
+      }
+      return {
+        ok: true,
+        user: userProfile,
+      };
+    } catch (error) {
+      return {
+        error: 'user not found',
+        ok: false,
+        user: null,
+      };
+    }
+  }
+
+  @UseGuards(AuthGuards)
+  @Mutation(() => EditProfileOutput)
+  async editProfile(
+    @AuthUser() authUser: User,
+    @Args('input') editProfileInput: EditProfileInput,
+  ): Promise<EditProfileOutput> {
+    try {
+      await this.userService.editProfile(authUser.id, editProfileInput);
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error,
+      };
+    }
   }
 }
