@@ -18,6 +18,7 @@ import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
 import { Verification } from './users/entities/verification.entity';
 // import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -28,6 +29,9 @@ import { Verification } from './users/entities/verification.entity';
         DB_USERNAME: Joi.string().default('root').required(),
         DB_DATABASE: Joi.string().default('restaurants').required(),
         SECRET_KEY: Joi.string().required(),
+        MAIL_API_KEY: Joi.string().required(),
+        MAIL_EMAIL_DOMAIN: Joi.string().required(),
+        MAIL_FROM_EMAIL: Joi.string().required(),
       }),
       isGlobal: true,
       envFilePath: process.env.NODE_ENV === 'dev' ? '.env.dev' : '.env.test',
@@ -52,7 +56,13 @@ import { Verification } from './users/entities/verification.entity';
     JwtModule.forRoot({
       privateKey: process.env.SECRET_KEY,
     }),
+    MailModule.forRoot({
+      apiKey: process.env.MAIL_API_KEY,
+      emailDomain: process.env.MAIL_EMAIL_DOMAIN,
+      fromEmail: process.env.MAIL_FROM_EMAIL,
+    }),
     UsersModule,
+
     // CommonModule,
     // AuthModule,
   ],
